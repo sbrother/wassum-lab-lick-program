@@ -1,0 +1,109 @@
+#:kivy 1.4.1
+#:set line_height 38
+
+
+<SeparatorBar>:
+    canvas:
+        Color:
+            rgb: [0.267, 0.573, 0.749]
+        Rectangle:
+            pos: root.pos
+            size: root.size
+
+[LabeledButton@BoxLayout]:
+    orientation: 'horizontal'
+    spacing: 5
+    padding: 5
+    size_hint: (1, None)
+    height: line_height
+    Label:
+        text: ctx.label_text
+        size_hint: (None, 1)
+        size: self.texture_size
+        
+    Button:        
+        text: ctx.button_text
+        size_hint: (None, 1)
+        size: (self.texture_size[0] + 8, self.texture_size[1] + 8)
+        on_release: ctx.callback()
+    Widget:
+        size_hint: (1,1)
+        # filler
+
+[LabeledTextInput@BoxLayout]:
+    orientation: 'horizontal'
+    spacing: 5
+    padding: 5
+    size_hint: (1, None)
+    height: line_height
+    Label:
+        text: ctx.label_text
+        size_hint: (None, 1)
+        size: self.texture_size        
+    TextInput:
+        text: ctx.default
+        multiline: False
+        size_hint: (None, 1)
+        width: 100
+    Widget:
+        size_hint: (1,1)
+        # filler
+
+
+<MainInterface>:
+
+    BoxLayout:
+        orientation: 'horizontal'
+        pos: root.pos
+        size: root.size
+        padding: 10
+        spacing: 30
+        BoxLayout:
+            orientation: 'vertical'
+            size_hint: (0.3, 1.0)
+            Label:
+                text: "Input Files"
+                size_hint: (1, None)
+                height: line_height
+            SeparatorBar:
+                size_hint: (1, None)
+                height: 5
+            Widget: 
+                size_hint: (1, 1)
+                # file list goes here
+            BoxLayout:
+                size_hint: (1, None)
+                orientation: 'horizontal'
+                spacing: 10
+                Button:
+                    text: "Add"
+                    size_hint: (0.5, None)
+                    height: line_height
+                Button:
+                    text: "Clear"
+                    size_hint: (0.5, None)
+                    height: line_height
+        BoxLayout:
+            orientation: 'vertical'
+            size_hint: (0.7, 1.0)
+            Label:
+                text: "Analysis Parameters"
+                size_hint: (1, None)
+                height: line_height
+            SeparatorBar:
+                size_hint: (1, None)
+                height: 5
+            LabeledButton:
+                label_text: 'Event Array'
+                button_text: "Not Selected"
+                callback: root.event_array_button_pressed
+            LabeledButton:
+                label_text: 'Time Array'
+                button_text: "Not Selected"
+                callback: root.time_array_button_pressed
+            LabeledTextInput:
+                label_text: 'Minimum Interlick Interval:'
+                default: "0.05"
+            Widget: 
+                size_hint: (1, 1)
+                # filler
