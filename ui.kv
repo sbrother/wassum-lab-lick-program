@@ -50,7 +50,22 @@
         # filler
 
 
+<FileList>:
+    file_bl: file_bl
+    ScrollView:
+        id: scrlv
+        pos: root.pos
+        size: root.size
+        BoxLayout:
+            id: file_bl
+            size_hint: (1, None)
+            orientation: 'vertical'
+            height: max(root.line_height * (len(root.items) + self.spacing), scrlv.height)
+
+
+
 <MainInterface>:
+    file_list: file_list
 
     BoxLayout:
         orientation: 'horizontal'
@@ -68,21 +83,23 @@
             SeparatorBar:
                 size_hint: (1, None)
                 height: 5
-            Widget: 
+            FileList:
+                id: file_list
                 size_hint: (1, 1)
-                # file list goes here
             BoxLayout:
                 size_hint: (1, None)
                 orientation: 'horizontal'
                 spacing: 10
                 Button:
-                    text: "Add"
-                    size_hint: (0.5, None)
+                    text: "Add File or Folder..."
+                    size_hint: (0.7, None)
                     height: line_height
+                    on_release: root.add_file_pressed()
                 Button:
                     text: "Clear"
-                    size_hint: (0.5, None)
+                    size_hint: (0.3, None)
                     height: line_height
+                    on_release: root.clear_files_pressed()
         BoxLayout:
             orientation: 'vertical'
             size_hint: (0.7, 1.0)
@@ -107,3 +124,53 @@
             Widget: 
                 size_hint: (1, 1)
                 # filler
+
+
+
+<LoadDialog>:
+    filechooser: filechooser
+    BoxLayout:
+        size: root.size
+        pos: root.pos
+        orientation: "vertical"
+        FileChooserListView:
+            id: filechooser
+
+        BoxLayout:
+            size_hint_y: None
+            height: 30
+            Button:
+                text: "Cancel"
+                on_release: root.cancel()
+
+            Button:
+                text: "Load"
+                on_release: root.load(filechooser.path, filechooser.selection)
+
+<SaveDialog>:
+    filechooser: filechooser
+    text_input: text_input
+    BoxLayout:
+        size: root.size
+        pos: root.pos
+        orientation: "vertical"
+        FileChooserListView:
+            id: filechooser
+            on_selection: text_input.text = self.selection and self.selection[0] or ''
+
+        TextInput:
+            id: text_input
+            size_hint_y: None
+            height: 30
+            multiline: False
+            focus: True
+        BoxLayout:
+            size_hint_y: None
+            height: 30
+            Button:
+                text: "Cancel"
+                on_release: root.cancel()
+
+            Button:
+                text: "Save"
+                on_release: root.save(filechooser.path, text_input.text)
