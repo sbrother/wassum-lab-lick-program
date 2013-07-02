@@ -18,16 +18,37 @@ class SeparatorBar(Widget):
 
 class FileList(Widget):
     file_bl = ObjectProperty(None)
-    items = ListProperty([])
+    items_text = ListProperty([])
+    items_obj = ListProperty([])
     line_height = NumericProperty(30)
 
-    def load_folder(self, path):
-        print path
+    all_keys = set()
+
+    def load_folder(self, path):        
+        files = [os.path.join(path, f) for f in os.listdir(path)]
+        self.load_files(files)
 
     def load_files(self, filenames):
-        print filenames
+        files_text = []
+        files_obj = []
+        for f in filenames:
+            try:
+                inf = InputFile(f)
+                subject_name = inf['Subject']
+                if subject_name in self.items_text:
+                    print "duplicate!"
+                    raise ValueError                
+                files_obj.append(inf)
+                files_text.append(subject_name)
+            except Exception as e:
+                print e
+                continue
+        print self.items_obj, files_obj
+        # for some reason, += does not work with ListProperties
+        self.items_obj = self.items_obj + files_obj
+        self.items_text = self.items_text + files_text
 
-    def on_items(self, instance, value):
+    def on_items_text(self, instance, value):
         self.file_bl.clear_widgets()
         for i in value:
             lbl = Label(text=str(i), size_hint=(1, None), height=self.line_height)
@@ -41,7 +62,8 @@ class FileList(Widget):
             self.load_files(filenames)
 
     def clear(self):
-        self.items = []
+        self.items_text = []
+        self.items_obj = []
 
 
 class MainInterface(Widget):

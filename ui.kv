@@ -60,7 +60,7 @@
             id: file_bl
             size_hint: (1, None)
             orientation: 'vertical'
-            height: max(root.line_height * (len(root.items) + self.spacing), scrlv.height)
+            height: max(root.line_height * (len(root.items_text) + self.spacing), scrlv.height)
 
 
 
@@ -77,7 +77,7 @@
             orientation: 'vertical'
             size_hint: (0.3, 1.0)
             Label:
-                text: "Input Files"
+                text: "Subjects"
                 size_hint: (1, None)
                 height: line_height
             SeparatorBar:

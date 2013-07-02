@@ -29,3 +29,5 @@ class InputFile(object):
                         except ValueError:
                             self.data[k] = v
 
+    def __getitem__(self, index):
+        return self.data.get(index)
