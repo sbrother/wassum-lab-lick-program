@@ -66,6 +66,8 @@
 
 <MainInterface>:
     file_list: file_list
+    event_array_button: event_array_button
+    time_array_button: time_array_button
 
     BoxLayout:
         orientation: 'horizontal'
@@ -111,10 +113,12 @@
                 size_hint: (1, None)
                 height: 5
             LabeledButton:
+                id: event_array_button
                 label_text: 'Event Array'
                 button_text: "Not Selected"
                 callback: root.event_array_button_pressed
             LabeledButton:
+                id: time_array_button
                 label_text: 'Time Array'
                 button_text: "Not Selected"
                 callback: root.time_array_button_pressed

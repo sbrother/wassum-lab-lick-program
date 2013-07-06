@@ -1,4 +1,4 @@
-import kivy
+
 from kivy.uix.widget import Widget
 from kivy.lang import Builder
 from kivy.config import Config
@@ -6,6 +6,9 @@ from kivy.properties import ObjectProperty, BooleanProperty, StringProperty, Lis
 from kivy.uix.label import Label
 from kivy.uix.floatlayout import FloatLayout
 from kivy.uix.popup import Popup
+from kivy.uix.dropdown import DropDown
+from kivy.uix.button import Button
+
 from util import InputFile
 import os
 
@@ -69,6 +72,7 @@ class FileList(Widget):
 class MainInterface(Widget):
 
     file_list = ObjectProperty(None)
+    event_array_button = ObjectProperty(None)
 
     def add_file_pressed(self):
         ls = LoadSave(action = 'load', callback=self.file_list.load_file_callback)
@@ -77,7 +81,13 @@ class MainInterface(Widget):
         self.file_list.clear()
 
     def event_array_button_pressed(self):
-        print "event button pressed"
+        dropdown = DropDown(auto_width=False, width=30)
+        for index in range(10):
+            btn = Button(text='Value %d' % index, size_hint_y=None, height=44)
+            btn.bind(on_release=lambda btn: dropdown.select(btn.text))
+            dropdown.add_widget(btn)
+            dropdown.bind(on_select=lambda instance, x: setattr(self.event_array_button, 'text', x))
+        dropdown.open(self.event_array_button)
 
     def time_array_button_pressed(self):
         print 'time button pressed'
