@@ -10,44 +10,6 @@
             pos: root.pos
             size: root.size
 
-[LabeledButton@BoxLayout]:
-    orientation: 'horizontal'
-    spacing: 5
-    padding: 5
-    size_hint: (1, None)
-    height: line_height
-    Label:
-        text: ctx.label_text
-        size_hint: (None, 1)
-        size: self.texture_size
-        
-    Button:        
-        text: ctx.button_text
-        size_hint: (None, 1)
-        size: (self.texture_size[0] + 8, self.texture_size[1] + 8)
-        on_release: ctx.callback()
-    Widget:
-        size_hint: (1,1)
-        # filler
-
-[LabeledTextInput@BoxLayout]:
-    orientation: 'horizontal'
-    spacing: 5
-    padding: 5
-    size_hint: (1, None)
-    height: line_height
-    Label:
-        text: ctx.label_text
-        size_hint: (None, 1)
-        size: self.texture_size        
-    TextInput:
-        text: ctx.default
-        multiline: False
-        size_hint: (None, 1)
-        width: 100
-    Widget:
-        size_hint: (1,1)
-        # filler
 
 
 <FileList>:
@@ -62,12 +24,17 @@
             orientation: 'vertical'
             height: max(root.line_height * (len(root.items_text) + self.spacing), scrlv.height)
 
-
+            
 
 <MainInterface>:
     file_list: file_list
     event_array_button: event_array_button
     time_array_button: time_array_button
+    event_grid: event_grid
+    ti_min_interval: ti_min_interval
+    ti_stop_trigger_total_interval: ti_stop_trigger_total_interval
+    ti_stop_trigger_event_num: ti_stop_trigger_event_num
+    ti_stop_trigger_absolute_time: ti_stop_trigger_absolute_time
 
     BoxLayout:
         orientation: 'horizontal'
@@ -112,22 +79,141 @@
             SeparatorBar:
                 size_hint: (1, None)
                 height: 5
-            LabeledButton:
-                id: event_array_button
-                label_text: 'Event Array'
-                button_text: "Not Selected"
-                callback: root.event_array_button_pressed
-            LabeledButton:
-                id: time_array_button
-                label_text: 'Time Array'
-                button_text: "Not Selected"
-                callback: root.time_array_button_pressed
-            LabeledTextInput:
-                label_text: 'Minimum Interlick Interval:'
-                default: "0.05"
+            BoxLayout:
+                orientation: 'horizontal'
+                spacing: 5
+                padding: 5
+                size_hint: (1, None)
+                height: line_height
+                Label:
+                    text: 'Event Array'
+                    size_hint: (None, 1)
+                    size: self.texture_size
+                Button:        
+                    id: event_array_button
+                    text: "Not Selected"
+                    size_hint: (None, 1)
+                    size: (self.texture_size[0] + 8, self.texture_size[1] + 8)
+                    on_release: root.event_array_button_pressed()
+                Widget:
+                    size_hint: (1,1)
+                    # filler
+            BoxLayout:
+                orientation: 'horizontal'
+                spacing: 5
+                padding: 5
+                size_hint: (1, None)
+                height: line_height
+                Label:
+                    text: 'Time Array'
+                    size_hint: (None, 1)
+                    size: self.texture_size
+                Button:        
+                    id: time_array_button
+                    text: "Not Selected"
+                    size_hint: (None, 1)
+                    size: (self.texture_size[0] + 8, self.texture_size[1] + 8)
+                    on_release: root.time_array_button_pressed()
+                Widget:
+                    size_hint: (1,1)
+                    # filler        
+            BoxLayout:
+                orientation: 'horizontal'
+                spacing: 5
+                padding: 5
+                size_hint: (1, None)
+                height: line_height
+                Label:
+                    text: "Minimum Interlick Interval"
+                    size_hint: (None, 1)
+                    size: self.texture_size        
+                TextInput:
+                    id: ti_min_interval
+                    text: "0.05"
+                    multiline: False
+                    size_hint: (None, 1)
+                    width: 100
+                Widget:
+                    size_hint: (1,1)
+                    # filler
+            BoxLayout:
+                orientation: 'horizontal'
+                spacing: 5
+                padding: 5
+                size_hint: (1, None)
+                height: line_height
+                Label:
+                    text: "Stop event:"
+                    size_hint: (None, 1)
+                    size: self.texture_size
+                TextInput:
+                    id: ti_stop_trigger_total_interval
+                    text: "4.9"
+                    multiline: False
+                    size_hint: (None, 1)
+                    width: 40
+                Label:
+                    text: "second total interlick interval over"
+                    size_hint: (None, 1)
+                    size: self.texture_size
+                TextInput:
+                    id: ti_stop_trigger_event_num
+                    text: "5"
+                    multiline: False
+                    size_hint: (None, 1)
+                    width: 40
+                Label:
+                    text: "events"
+                    size_hint: (None, 1)
+                    size: self.texture_size
+                Widget:
+                    size_hint: (1,1)
+                    # filler
+            BoxLayout:
+                orientation: 'horizontal'
+                spacing: 5
+                padding: 5
+                size_hint: (1, None)
+                height: line_height
+                Label:
+                    text: "OR"
+                    size_hint: (None, 1)
+                    size: self.texture_size
+                TextInput:
+                    id: ti_stop_trigger_absolute_time
+                    text: "20"
+                    multiline: False
+                    size_hint: (None, 1)
+                    width: 40
+                Label:
+                    text: "seconds after trial start"
+                    size_hint: (None, 1)
+                    size: self.texture_size
+                Widget:
+                    size_hint: (1,1)
+                    # filler
             Widget: 
+                size_hint: (1, None)
+                height: 20
+            ScrollView:
                 size_hint: (1, 1)
-                # filler
+                EventGrid:
+                    id: event_grid
+                    size_hint: (1, None)
+                    height: (self.line_height+self.spacing)*(len(self.event_ids) + 1) + 5 + 2 * self.padding
+            BoxLayout:
+                size_hint: (1, None)
+                orientation: 'horizontal'
+                spacing: 10
+                height: line_height + self.spacing
+                Widget:
+                    size_hint: (0.7, None)
+                    height: line_height
+                Button:
+                    text: "Export Results..."
+                    size_hint: (0.3, None)
+                    height: line_height
+                    on_release: root.export_button_pressed()
 
 
 

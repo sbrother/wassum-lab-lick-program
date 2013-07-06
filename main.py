@@ -5,16 +5,33 @@ from kivy.config import Config
 from kivy.properties import ObjectProperty, BooleanProperty, StringProperty, ListProperty, NumericProperty
 from kivy.uix.label import Label
 from kivy.uix.floatlayout import FloatLayout
+from kivy.uix.gridlayout import GridLayout
 from kivy.uix.popup import Popup
+from kivy.uix.checkbox import CheckBox
+from kivy.uix.textinput import TextInput
 from kivy.uix.dropdown import DropDown
 from kivy.uix.button import Button
 
-from util import InputFile
+from util import InputFile, LickAnalyzer, ValidationException
 import os
+from collections import defaultdict
 
 Builder.load_file('ui.kv')
 Config.set('graphics', 'width', '1200')
 Config.set('graphics', 'height', '700')
+
+def debug(v):
+    print v
+    return v
+
+def make_dropdown(labels, callback, width = 80, line_height = 30):
+    dropdown = DropDown(auto_width=False, width=width)
+    for name in labels:
+        btn = Button(text=str(name), size_hint_y=None, height=line_height)
+        btn.bind(on_release=lambda btn: dropdown.select(btn.text))
+        dropdown.add_widget(btn)
+    dropdown.bind(on_select=callback)
+    return dropdown
 
 class SeparatorBar(Widget):
     pass
@@ -68,29 +85,118 @@ class FileList(Widget):
         self.items_text = []
         self.items_obj = []
 
+    def get_array_column_names(self):
+        array_columns = set()
+        for o in self.items_obj:
+            array_columns = array_columns.union(set([k for k in o.keys() if isinstance(o[k],list)]))
+        return sorted(list(array_columns))
+
+    def get_event_ids(self, array_key):
+        event_ids = set()
+        for o in self.items_obj:
+            try:
+                event_ids = event_ids.union(set(o[array_key]))
+            except:
+                pass
+        return sorted(list(event_ids)[:30])
+
 
 class MainInterface(Widget):
-
+    event_grid = ObjectProperty(None)
     file_list = ObjectProperty(None)
     event_array_button = ObjectProperty(None)
+    time_array_button = ObjectProperty(None)
+    ti_min_interval = ObjectProperty(None)
+
+    def check_input(self, value, desired_type):
+        try:
+            return desired_type(value)
+        except ValueError:
+            print "Could not read understand input: %s" % (value,)
+            return None
+
+    def export_button_pressed(self):
+        analyzer = LickAnalyzer()
+        analyzer.event_settings = self.event_grid.get_data()
+        analyzer.event_array = self.event_array_button.text
+        analyzer.time_array = self.time_array_button.text
+        analyzer.minimum_interlick_interval = self.check_input(self.ti_min_interval.text, float)
+        analyzer.stop_trigger_total_interval = self.check_input(self.ti_stop_trigger_total_interval.text, float)
+        analyzer.stop_trigger_event_num = self.check_input(self.ti_stop_trigger_event_num.text, float)
+        analyzer.stop_trigger_absolute_time = self.check_input(self.ti_stop_trigger_absolute_time.text, float)
+        analyzer.input_files = self.file_list.items_obj
+        try:
+            analyzer.validate()
+        except ValidationException as e:
+            # do something here like show a popup
+            pass
 
     def add_file_pressed(self):
-        ls = LoadSave(action = 'load', callback=self.file_list.load_file_callback)
+        LoadSave(action = 'load', callback=self.file_list.load_file_callback)
 
     def clear_files_pressed(self):
         self.file_list.clear()
+        self.set_event_array(None, "Not Selected")
+        self.set_time_array(None, "Not Selected")
 
     def event_array_button_pressed(self):
-        dropdown = DropDown(auto_width=False, width=30)
-        for index in range(10):
-            btn = Button(text='Value %d' % index, size_hint_y=None, height=44)
-            btn.bind(on_release=lambda btn: dropdown.select(btn.text))
-            dropdown.add_widget(btn)
-            dropdown.bind(on_select=lambda instance, x: setattr(self.event_array_button, 'text', x))
-        dropdown.open(self.event_array_button)
+        columns = self.file_list.get_array_column_names()
+        if len(columns) == 0 : return
+        dropdown = make_dropdown(columns, self.set_event_array)
+        dropdown.open(self.event_array_button)  
 
     def time_array_button_pressed(self):
-        print 'time button pressed'
+        columns = self.file_list.get_array_column_names()
+        if len(columns) == 0 : return
+        dropdown = make_dropdown(columns, self.set_time_array)
+        dropdown.open(self.time_array_button)  
+
+    def set_event_array(self, instance, text):
+        self.event_array_button.text = text
+        self.event_grid.event_ids = self.file_list.get_event_ids(text)
+
+    def set_time_array(self, instance, text):
+        self.time_array_button.text = text
+
+class EventGrid(GridLayout):
+    header_row = ["Event", "Label", "Analyzed", "Ignored"]
+    event_ids = ListProperty([])
+
+    def __init__(self, line_height = 30, **kwargs):        
+        kwargs['cols'] = 4
+        kwargs['size_hint_y'] = None
+        self.line_height = line_height
+        super(EventGrid, self).__init__(**kwargs)
+        self.build()
+
+    def build(self):
+        self.clear_widgets()
+        for t in self.header_row:
+            self.add_widget(Label(text=t, size_hint_y= None, height=self.line_height))
+        for i in range(self.cols):
+            self.add_widget(SeparatorBar(height=5, size_hint_y=None))
+        for e in self.event_ids:
+            event_str = str(e)
+            self.add_widget(Label(text=event_str, size_hint_y= None, height=self.line_height))
+            self.add_widget(TextInput(id='label:'+event_str, text="", size_hint_y= None, height=self.line_height, multiline=False))
+            self.add_widget(CheckBox(id='analyze:'+event_str, group=event_str, size_hint_y= None, height=self.line_height, active=True))
+            self.add_widget(CheckBox(id='ignore:'+event_str, group=event_str, size_hint_y= None, height=self.line_height))
+
+    def on_event_ids(self, instance, value):
+        self.build()
+
+    def get_data(self):
+        event_settings = defaultdict(dict)
+        for w in self.children:
+            if w.id is not None:
+                k, v = w.id.split(':', 1)
+                if k == 'label':
+                    event_settings[v]['label'] = w.text
+                elif k == 'analyze':
+                    event_settings[v]['analyze'] = w.active
+                elif k == 'ignore':
+                    event_settings[v]['ignore'] = w.active
+        return dict(event_settings)
 
 class LoadSave(Widget):
     ok = BooleanProperty(False)
