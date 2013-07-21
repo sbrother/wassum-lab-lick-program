@@ -158,11 +158,11 @@ class MainInterface(Widget):
         self.time_array_button.text = text
 
 class EventGrid(GridLayout):
-    header_row = ["Event", "Label", "Analyzed", "Ignored"]
+    header_row = ["Event", "Label", "Target (Lick)", "Initiates Trial", "Ignored"]
     event_ids = ListProperty([])
 
     def __init__(self, line_height = 30, **kwargs):        
-        kwargs['cols'] = 4
+        kwargs['cols'] = 5
         kwargs['size_hint_y'] = None
         self.line_height = line_height
         super(EventGrid, self).__init__(**kwargs)
@@ -174,12 +174,13 @@ class EventGrid(GridLayout):
             self.add_widget(Label(text=t, size_hint_y= None, height=self.line_height))
         for i in range(self.cols):
             self.add_widget(SeparatorBar(height=5, size_hint_y=None))
-        for e in self.event_ids:
+        for idx, e in enumerate(self.event_ids):
             event_str = str(e)
             self.add_widget(Label(text=event_str, size_hint_y= None, height=self.line_height))
             self.add_widget(TextInput(id='label:'+event_str, text="", size_hint_y= None, height=self.line_height, multiline=False))
-            self.add_widget(CheckBox(id='analyze:'+event_str, group=event_str, size_hint_y= None, height=self.line_height, active=True))
-            self.add_widget(CheckBox(id='ignore:'+event_str, group=event_str, size_hint_y= None, height=self.line_height))
+            self.add_widget(CheckBox(id='target:'+event_str, group="target", size_hint_y= None, height=self.line_height, active=(idx==0)))
+            self.add_widget(CheckBox(id='initiates:'+event_str, size_hint_y= None, height=self.line_height, active=True))
+            self.add_widget(CheckBox(id='ignore:'+event_str, size_hint_y= None, height=self.line_height))
 
     def on_event_ids(self, instance, value):
         self.build()
@@ -191,8 +192,10 @@ class EventGrid(GridLayout):
                 k, v = w.id.split(':', 1)
                 if k == 'label':
                     event_settings[v]['label'] = w.text
-                elif k == 'analyze':
-                    event_settings[v]['analyze'] = w.active
+                elif k == 'target':
+                    event_settings[v]['target'] = w.active
+                elif k == 'initiates':
+                    event_settings[v]['initiates'] = w.active
                 elif k == 'ignore':
                     event_settings[v]['ignore'] = w.active
         return dict(event_settings)

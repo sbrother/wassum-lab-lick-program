@@ -1,7 +1,14 @@
-
+from itertools import dropwhile
+from collections import deque
 
 class ValidationException(Exception):
     pass
+
+def float_if_possible(k):
+    try:
+        return float(k)
+    except:
+        return k
 
 class LickAnalyzer(object):
     event_array = None
@@ -38,10 +45,19 @@ class LickAnalyzer(object):
     def export_all(self, output_filename):
         self.validate()
         
-        events_to_analyze = [k for k, v in self.event_settings.iteritems() if v.get('analyze', False)]
-        events_to_ignore = [k for k, v in self.event_settings.iteritems() if v.get('ignore', False)]
-        if len(events_to_analyze) == 0:
-            raise ValidationException("You must analyze at least one type of event.")
+        events_to_target = [float_if_possible(k) for k, v in self.event_settings.iteritems() if v.get('target', False)]
+        events_that_initiate = [float_if_possible(k) for k, v in self.event_settings.iteritems() if v.get('initiates', False)]
+        events_to_ignore = [float_if_possible(k) for k, v in self.event_settings.iteritems() if v.get('ignore', False)]
+
+        if len(events_to_target) != 1:
+            raise ValidationException("You must choose one 'lick' event.")
+        else: 
+            target_event = events_to_target[0]
+
+        if len(events_that_initiate) == 0:
+            raise ValidationException("You must choose at least one event type to initiate a trial.")
+        else: 
+            pass
 
         for file_obj in self.input_files:
             timearray = self.get_array_data(file_obj, self.time_array)
@@ -51,14 +67,65 @@ class LickAnalyzer(object):
             if len(timearray) < 10:
                 raise ValidationException("Time and event array fields only have %s elements; did you choose the correct fields?" % (len(timearray),))            
 
-            filtered_events = self.filter_events(eventarray, timearray, events_to_analyze, events_to_ignore)
+            processed_events = self.process_events(eventarray, timearray, target_event, events_to_ignore, events_that_initiate)
 
-    def filter_events(self, event_array, time_array, events_to_analyze, events_to_ignore):
+    def filter_events(self, event_times, target_event, events_to_ignore):
+        prev = None
+        for e,t in event_times:
+            if e in events_to_ignore: 
+                continue
+            if e == target_event and prev is not None and abs(t-prev) < self.minimum_interlick_interval: 
+                continue
+            prev = t
+            yield (e,t)
+
+    def process_events(self, event_array, time_array, target_event, events_to_ignore, events_that_initiate):
         # iterates over event_array and time_array and remove any identical events that are within 
         # self.minimum_interlick_interval from each other. Then truncates the lists at the STOP 
         # point as decided by self.stop_trigger_total_interval, self.stop_trigger_event_num, and 
         # self.stop_trigger_absolute_time. Returns a zipped list in the format [(event_type, time)]
-        pass
+
+        event_times = self.filter_events(zip(event_array, time_array), target_event, events_to_ignore)
+        trial, tail = self.extract_trials(event_times, target_event, events_to_ignore, events_that_initiate)
+        all_trials = []
+        while len(trial) > 0:
+            all_trials.append(trial)
+            trial, tail = self.extract_trials(tail, target_event, events_to_ignore, events_that_initiate)
+
+        print [len(t) for t in all_trials]
+
+    def describe_trial(self, trial):
+        times = [x[1] for x in trial]
+
+        return {
+            'Total Time per bout': max()
+
+        }
+
+        Trial   Total Time per bout licks per bout  Lick Frequency  average ili # of breaks >0.25   # of breaks >0.5    # of breaks >0.25 <0.5  # of breaks >0.5, <1    # of breaks >1s
+
+    def extract_trials(self, event_times, target_event, events_to_ignore, events_that_initiate):
+        trial = []
+        deque_length = self.stop_trigger_event_num + 1
+        tail = []
+        in_trial = True
+        last_e_tracker = deque(maxlen=deque_length)
+        last_t_tracker = deque(maxlen=deque_length)
+
+        for e, t in dropwhile(lambda p: p[0] not in events_that_initiate, event_times):
+            if in_trial:
+                last_e_tracker.append(e)
+                last_t_tracker.append(t)
+                if (len(last_t_tracker) == deque_length and max(last_t_tracker) - min(last_t_tracker) > self.stop_trigger_total_interval): # or (len(trial) > 1 and abs(trial[0][1] - trial[-1][1]) > self.stop_trigger_absolute_time):
+                    in_trial = False
+                    last_e_tracker.clear()                    
+                    last_t_tracker.clear()                    
+                elif len(last_t_tracker) == deque_length:
+                    trial.append((last_e_tracker[0],last_t_tracker[0]))
+            else:
+                tail.append((e,t))
+        return trial, tail
+
 
 class InputFile(object):
     def __init__(self, filename):
@@ -95,4 +162,4 @@ class InputFile(object):
     def __getitem__(self, index):
         return self.data.get(index)
 
-        
+    
