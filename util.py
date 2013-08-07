@@ -1,5 +1,6 @@
 from itertools import dropwhile
 from collections import deque
+from csv import DictWriter
 
 class ValidationException(Exception):
     pass
@@ -10,6 +11,9 @@ def float_if_possible(k):
     except:
         return k
 
+def diff(array):
+    return [x[0]-x[1] for x in zip(array[1:],array[:-1])]
+    
 class LickAnalyzer(object):
     event_array = None
     time_array = None
@@ -59,6 +63,7 @@ class LickAnalyzer(object):
         else: 
             pass
 
+        all_file_output = []
         for file_obj in self.input_files:
             timearray = self.get_array_data(file_obj, self.time_array)
             eventarray = self.get_array_data(file_obj, self.event_array)
@@ -68,6 +73,20 @@ class LickAnalyzer(object):
                 raise ValidationException("Time and event array fields only have %s elements; did you choose the correct fields?" % (len(timearray),))            
 
             processed_events = self.process_events(eventarray, timearray, target_event, events_to_ignore, events_that_initiate)
+
+            for idx, p in enumerate(processed_events):
+                p.update({'Subject': file_obj['Subject'], 'Trial Number': idx+1}) 
+                all_file_output.append(p)
+
+        _fieldnames = reduce(lambda a,b: a.union(b), [set(d.keys()) for d in all_file_output])
+        fieldnames = sorted(list(_fieldnames), key=lambda x: {'Subject': '0000', 'Trial Number': '1111'}.get(x, x))
+            
+        with open('test.csv', 'w') as outf:
+            csvwriter = DictWriter(outf, fieldnames = list(fieldnames))
+            csvwriter.writeheader()
+            for line in all_file_output:
+                csvwriter.writerow(line)
+            
 
     def filter_events(self, event_times, target_event, events_to_ignore):
         prev = None
@@ -92,17 +111,23 @@ class LickAnalyzer(object):
             all_trials.append(trial)
             trial, tail = self.extract_trials(tail, target_event, events_to_ignore, events_that_initiate)
 
-        print [len(t) for t in all_trials]
+        return [self.describe_trial(t) for t in all_trials]
 
     def describe_trial(self, trial):
         times = [x[1] for x in trial]
-
+        ili = diff(times)
+        
         return {
-            'Total Time per bout': max()
-
+            'Total Time': max(times) - min(times),
+            'Licks': len(times),
+            'Lick Frequency': len(times)/float(max(times)-min(times)),
+            'Average ILI': sum(ili)/float(len(ili)),
+            'Number of breaks > 0.25s': len([d for d in ili if d > 0.25]),
+            'Number of breaks > 0.5s': len([d for d in ili if d > 0.5]),
+            'Number of breaks > 1.0s': len([d for d in ili if d > 1.0]),
         }
 
-        Trial   Total Time per bout licks per bout  Lick Frequency  average ili # of breaks >0.25   # of breaks >0.5    # of breaks >0.25 <0.5  # of breaks >0.5, <1    # of breaks >1s
+    #Trial   Total Time per bout licks per bout  Lick Frequency  average ili # of breaks >0.25   # of breaks >0.5    # of breaks >0.25 <0.5  # of breaks >0.5, <1    # of breaks >1s
 
     def extract_trials(self, event_times, target_event, events_to_ignore, events_that_initiate):
         trial = []
