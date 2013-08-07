@@ -141,7 +141,7 @@ class LickAnalyzer(object):
             if in_trial:
                 last_e_tracker.append(e)
                 last_t_tracker.append(t)
-                if (len(last_t_tracker) == deque_length and max(last_t_tracker) - min(last_t_tracker) > self.stop_trigger_total_interval): # or (len(trial) > 1 and abs(trial[0][1] - trial[-1][1]) > self.stop_trigger_absolute_time):
+                if (len(last_t_tracker) == deque_length and max(last_t_tracker) - min(last_t_tracker) > self.stop_trigger_total_interval) or (len(trial) > 1 and abs(trial[0][1] - trial[-1][1]) > self.stop_trigger_absolute_time):
                     in_trial = False
                     last_e_tracker.clear()                    
                     last_t_tracker.clear()                    
