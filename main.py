@@ -16,7 +16,7 @@ from util import InputFile, LickAnalyzer, ValidationException
 import os
 from collections import defaultdict
 
-Builder.load_file('ui.kv')
+Builder.load_file(os.path.join(os.path.dirname(os.path.realpath(__file__)), 'ui.kv'))
 Config.set('graphics', 'width', '1200')
 Config.set('graphics', 'height', '700')
 
