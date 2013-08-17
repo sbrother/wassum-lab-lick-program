@@ -214,7 +214,7 @@ class LoadSave(Widget):
     def __init__(self, action=None, callback=None, path = None, **kwargs):
         super(LoadSave, self).__init__(**kwargs)
         self.callback = callback
-        self.filechooser_path = path if path is not None else os.path.dirname(os.path.realpath(__file__))
+        self.filechooser_path = path if path is not None else os.path.expanduser('~')
         if action == 'load':
             self.show_load()
         elif action == 'save':
