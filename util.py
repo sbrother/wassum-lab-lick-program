@@ -82,7 +82,7 @@ class LickAnalyzer(object):
         _fieldnames = reduce(lambda a,b: a.union(b), [set(d.keys()) for d in all_file_output])
         fieldnames = sorted(list(_fieldnames), key=lambda x: {'Subject': '0000', 'Trial Number': '1111'}.get(x, x))
             
-        with open(os.path.join(os.path.dirname(os.path.realpath(__file__)),'test.csv'), 'w') as outf:
+        with open(output_filename, 'wb') as outf:
             csvwriter = DictWriter(outf, fieldnames = list(fieldnames))
             csvwriter.writeheader()
             for line in all_file_output:

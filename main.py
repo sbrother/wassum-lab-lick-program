@@ -115,6 +115,9 @@ class MainInterface(Widget):
             raise ValidationException("Could not read understand input: %s" % (value,))
 
     def export_button_pressed(self):
+        LoadSave(action = 'save', callback=self.export_file_callback)
+
+    def export_file_callback(self, dirname, filename):
         analyzer = LickAnalyzer()
         try:
             analyzer.event_settings = self.event_grid.get_data()
@@ -125,7 +128,7 @@ class MainInterface(Widget):
             analyzer.stop_trigger_event_num = self.check_input(self.ti_stop_trigger_event_num.text, float)
             analyzer.stop_trigger_absolute_time = self.check_input(self.ti_stop_trigger_absolute_time.text, float)
             analyzer.input_files = self.file_list.items_obj        
-            analyzer.export_all(None)
+            analyzer.export_all(os.path.join(dirname,filename))
         except ValidationException as e:
             # do something here like show a popup
             print e
