@@ -108,11 +108,11 @@ class LickAnalyzer(object):
         event_times = self.filter_events(zip(event_array, time_array), target_event, events_to_ignore)
         trial, tail = self.extract_trials(event_times, target_event, events_to_ignore, events_that_initiate)
         all_trials = []
-        while len(trial) > 0:
+        while len(tail) > 0:
             all_trials.append(trial)
             trial, tail = self.extract_trials(tail, target_event, events_to_ignore, events_that_initiate)
 
-        return [self.describe_trial(t) for t in all_trials]
+        return [self.describe_trial(t) for t in all_trials if len(t) > 0]
 
     def describe_trial(self, trial):
         times = [x[1] for x in trial]
@@ -145,7 +145,7 @@ class LickAnalyzer(object):
                 if (len(last_t_tracker) == deque_length and max(last_t_tracker) - min(last_t_tracker) > self.stop_trigger_total_interval) or (len(trial) > 1 and abs(trial[0][1] - trial[-1][1]) > self.stop_trigger_absolute_time):
                     in_trial = False
                     last_e_tracker.clear()                    
-                    last_t_tracker.clear()                    
+                    last_t_tracker.clear()
                 elif len(last_t_tracker) == deque_length:
                     trial.append((last_e_tracker[0],last_t_tracker[0]))
             else:
