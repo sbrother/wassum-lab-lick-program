@@ -138,15 +138,25 @@ class LickAnalyzer(object):
         last_e_tracker = deque(maxlen=deque_length)
         last_t_tracker = deque(maxlen=deque_length)
 
-        for e, t in dropwhile(lambda p: p[0] not in events_that_initiate, event_times):
+        trial_iterator = dropwhile(lambda p: p[0] not in events_that_initiate, event_times)
+        try:
+            trial_iterator.next()
+        except StopIteration:
+            return [], []
+
+        for e, t in trial_iterator:
             if in_trial:
+                print "in trial:", t
                 last_e_tracker.append(e)
                 last_t_tracker.append(t)
                 if (len(last_t_tracker) == deque_length and max(last_t_tracker) - min(last_t_tracker) > self.stop_trigger_total_interval) or (len(trial) > 1 and abs(trial[0][1] - trial[-1][1]) > self.stop_trigger_absolute_time):
+                    print "exiting:", t
+                    print trial
+                    print last_t_tracker
                     in_trial = False
                     last_e_tracker.clear()                    
                     last_t_tracker.clear()
-                elif len(last_t_tracker) == deque_length:
+                elif len(last_t_tracker) == deque_length: 
                     trial.append((last_e_tracker[0],last_t_tracker[0]))
             else:
                 tail.append((e,t))
