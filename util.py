@@ -117,12 +117,12 @@ class LickAnalyzer(object):
     def describe_trial(self, trial):
         times = [x[1] for x in trial]
         ili = diff(times)
-        
+        total_time = max(times) - min(times)
         return {
-            'Total Time': max(times) - min(times),
+            'Total Time': total_time,
             'Licks': len(times),
-            'Lick Frequency': len(times)/float(max(times)-min(times)),
-            'Average ILI': sum(ili)/float(len(ili)),
+            'Lick Frequency': len(times)/float(total_time) if total_time != 0 else 0,
+            'Average ILI': sum(ili)/float(len(ili)) if len(ili) != 0 else 0,
             'Number of breaks > 0.25s': len([d for d in ili if d > 0.25]),
             'Number of breaks > 0.5s': len([d for d in ili if d > 0.5]),
             'Number of breaks > 1.0s': len([d for d in ili if d > 1.0]),
